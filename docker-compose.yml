@@ -1,0 +1,75 @@
+#port + 2
+#server: 8082
+services:
+  product-db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: productdb
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_ROOT_HOST: '%'
+    ports:
+      - "13308:3306"
+    volumes:
+      - product-db-data:/var/lib/mysql
+    networks:
+      - product-network
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      retries: 5
+      start_period: 20s
+
+  product-api:
+    build: .
+    ports:
+      - "8082:8082"
+    depends_on:
+      product-db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://product-db:3306/productdb
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: rootpassword
+    networks:
+      - product-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9092:9090"
+    volumes:
+      - ./datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    networks:
+      - product-network
+    hostname: prometheus    # 호스트 이름 명시적 지정
+    restart: always
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3002:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources    # 경로
+    depends_on:
+      - prometheus
+    networks:
+      - product-network
+    restart: always
+
+networks:
+  product-network:
+    driver: bridge

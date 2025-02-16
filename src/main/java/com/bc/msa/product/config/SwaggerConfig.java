@@ -1,4 +1,4 @@
-package com.bc.msa.product.common.config;
+package com.bc.msa.product.config;
 
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
