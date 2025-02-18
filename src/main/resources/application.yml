@@ -10,7 +10,10 @@ management:
   endpoints:
     web:
       exposure:
-        include: "health,info,prometheus"
+        include: "health,metrics,prometheus"
+  endpoint:
+    health:
+      show-details: always
   metrics:
     tags:
-      application: product-service
+      application: product-api

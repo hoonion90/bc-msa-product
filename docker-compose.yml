@@ -56,7 +56,7 @@ services:
     image: grafana/grafana:latest
     container_name: grafana_product
     ports:
-      - "3002:3000"
+      - "13002:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
